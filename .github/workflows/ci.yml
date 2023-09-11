@@ -180,3 +180,43 @@ jobs:
         run: |
           cd product
           CHAQUOPY_NO_BUILD=1 ./gradlew testIntegration-${{ matrix.agp-version }}
+
+  publish:
+    needs: [product]
+
+    # Allow deployment to GitHub Pages.
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+
+    # Allow only one concurrent deployment, skipping runs queued between
+    # the run in-progress and latest queued. However, do NOT cancel
+    # in-progress runs as we want deployments to complete.
+    concurrency:
+      group: pages
+      cancel-in-progress: false
+
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    runs-on: ubuntu-latest
+    steps:
+      - name: Setup Pages
+        uses: actions/configure-pages@v3
+
+      - name: Download maven artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: maven
+          path: maven
+
+      - name: Upload pages artifact
+        uses: actions/upload-pages-artifact@v1
+        with:
+          path: 'maven/'
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v2
